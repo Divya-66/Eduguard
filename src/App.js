@@ -6,9 +6,17 @@ import Login from './components/login';
 import Upload from './components/Upload';
 import Dashboard from './components/Dashboard';
 
-// Configure Amplify
-Amplify.configure(awsconfig);
-
+// Configure Amplify for confidential client with secret
+Amplify.configure({
+  ...awsconfig,
+  Auth: {
+    ...awsconfig.Auth,
+    Cognito: {
+      ...awsconfig.Auth.Cognito,
+      userPoolClientSecret: awsconfig.Auth.Cognito.userPoolClientSecret,  // Explicitly set secret for hashing
+    },
+  },
+});
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -69,6 +77,5 @@ function App() {
     </div>
   );
 }
-
 
 export default App;

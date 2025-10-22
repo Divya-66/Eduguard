@@ -1,99 +1,64 @@
 import React, { useState } from 'react';
-import { signIn, signUp, confirmSignUp } from 'aws-amplify/auth';
+import { signIn, signUp } from '@aws-amplify/auth';
+import CryptoJS from 'crypto-js';  // For HMAC in browser
+
+// Generate SECRET_HASH: Base64(HMAC_SHA256(username + clientId, secret))
+const generateSecretHash = (username, clientId, clientSecret) => {
+  const message = username + clientId;
+  const hmac = CryptoJS.HmacSHA256(message, clientSecret);
+  return CryptoJS.enc.Base64.stringify(hmac);
+};
 
 const Login = ({ onLogin }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
-  const [isSignUp, setIsSignUp] = useState(false);
-  const [confirmationCode, setConfirmationCode] = useState('');
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
+
+  // Load config from aws-exports
+  const awsConfig = require('../aws-exports').default.Auth.Cognito;
+  const clientId = awsConfig.userPoolClientId;
+  const clientSecret = awsConfig.userPoolClientSecret;
+
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    try {
+      const secretHash = generateSecretHash(email, clientId, clientSecret);
+      await signUp({
+        username: email,
+        password,
+        attributes: { email },
+        options: {  // Pass hash in options for v6
+          clientMetadata: { SECRET_HASH: secretHash },
+        },
+      });
+      alert('Sign-up success! Check email for confirmation code.');
+    } catch (err) {
+      setError('Sign-up failed: ' + err.message);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError('');
     try {
-      await signIn({ username: email, password });
-      onLogin(); // Callback to switch to dashboard
+      const secretHash = generateSecretHash(email, clientId, clientSecret);
+      await signIn(email, password, {  // Pass hash as option
+        secretHash,
+      });
+      onLogin();
     } catch (err) {
       setError('Login failed: ' + err.message);
     }
   };
 
-  const handleSignUp = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      await signUp({
-        username: email,
-        password: password,
-        options: {
-          userAttributes: {
-            email: email
-          }
-        }
-      });
-      setNeedsConfirmation(true);
-    } catch (err) {
-      setError('Sign up failed: ' + err.message);
-    }
-  };
-
-  const handleConfirmSignUp = async (e) => {
-    e.preventDefault();
-    setError('');
-    try {
-      await confirmSignUp({ username: email, confirmationCode });
-      setNeedsConfirmation(false);
-      setError('Account confirmed! Please login.');
-    } catch (err) {
-      setError('Confirmation failed: ' + err.message);
-    }
-  };
-
-  if (needsConfirmation) {
-    return (
-      <div>
-        <h2>Confirm Your Account</h2>
-        <p>Please check your email for the confirmation code.</p>
-        <form onSubmit={handleConfirmSignUp}>
-          <input 
-            type="text" 
-            placeholder="Confirmation Code" 
-            value={confirmationCode} 
-            onChange={(e) => setConfirmationCode(e.target.value)} 
-            required 
-          />
-          <button type="submit">Confirm Account</button>
-        </form>
-        {error && <p style={{color: 'red'}}>{error}</p>}
-      </div>
-    );
-  }
-
   return (
     <div>
-      <h2>{isSignUp ? 'Sign Up for EduGuard' : 'Login to EduGuard'}</h2>
-      <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
-        <input 
-          type="email" 
-          placeholder="Email" 
-          value={email} 
-          onChange={(e) => setEmail(e.target.value)} 
-          required 
-        />
-        <input 
-          type="password" 
-          placeholder="Password" 
-          value={password} 
-          onChange={(e) => setPassword(e.target.value)} 
-          required 
-        />
-        <button type="submit">{isSignUp ? 'Sign Up' : 'Login'}</button>
+      <h2>Login to EduGuard</h2>
+      <form onSubmit={handleLogin}>
+        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+        <button type="submit">Login</button>
       </form>
-      <button onClick={() => setIsSignUp(!isSignUp)}>
-        {isSignUp ? 'Already have an account? Login' : 'Need an account? Sign Up'}
-      </button>
+      <button onClick={handleSignUp}>Sign Up</button>
       {error && <p style={{color: 'red'}}>{error}</p>}
     </div>
   );
