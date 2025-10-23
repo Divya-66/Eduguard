@@ -6,17 +6,8 @@ import Login from './components/login';
 import Upload from './components/Upload';
 import Dashboard from './components/Dashboard';
 
-// Configure Amplify for confidential client with secret
-Amplify.configure({
-  ...awsconfig,
-  Auth: {
-    ...awsconfig.Auth,
-    Cognito: {
-      ...awsconfig.Auth.Cognito,
-      userPoolClientSecret: awsconfig.Auth.Cognito.userPoolClientSecret,  // Explicitly set secret for hashing
-    },
-  },
-});
+// Configure Amplify for public client (no secret)
+Amplify.configure(awsconfig);
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -51,29 +42,72 @@ function App() {
 
   if (isLoading) {
     return (
-      <div className="App">
-        <header>
-          <h1>EduGuard: Smart Exam Platform</h1>
+      <div className="app-container">
+        {/* Header */}
+        <header className="header">
+          <div className="header-content">
+            <div className="header-inner">
+              <h1 className="header-title">
+                EduGuard: Smart Exam Platform
+              </h1>
+            </div>
+          </div>
         </header>
-        <div>Loading...</div>
+        
+        {/* Loading content */}
+        <main className="loading-container">
+          <div style={{ textAlign: 'center' }}>
+            <div className="loading-spinner"></div>
+            <p className="loading-text">Loading...</p>
+          </div>
+        </main>
       </div>
     );
   }
 
   return (
-    <div className="App">
-      <header>
-        <h1>EduGuard: Smart Exam Platform</h1>
-        {isLoggedIn ? <button onClick={handleLogout}>Logout</button> : null}
-      </header>
-      {isLoggedIn ? (
-        <div>
-          <Upload />
-          <Dashboard />
+    <div className="app-container">
+      {/* Header */}
+      <header className="header">
+        <div className="header-content">
+          <div className="header-inner">
+            <h1 className="header-title">
+              EduGuard: Smart Exam Platform
+            </h1>
+            {isLoggedIn && (
+              <button
+                onClick={handleLogout}
+                className="logout-btn"
+              >
+                Logout
+              </button>
+            )}
+          </div>
         </div>
-      ) : (
-        <Login onLogin={handleLogin} />
-      )}
+      </header>
+
+      {/* Main content */}
+      <main className="main-content">
+        <div className="main-container">
+          {isLoggedIn ? (
+            <div className="content-grid">
+              <Upload />
+              <Dashboard />
+            </div>
+          ) : (
+            <Login onLogin={handleLogin} />
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="footer">
+        <div className="footer-content">
+          <p className="footer-text">
+            © 2025 EduGuard
+          </p>
+        </div>
+      </footer>
     </div>
   );
 }

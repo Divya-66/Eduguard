@@ -2,12 +2,11 @@
 export default {
   Auth: {
     Cognito: {
-      userPoolId: 'eu-north-1_Bk3fVXL4y',
-      userPoolClientId: '55f6brdtu2t4hhrp1r0pib13of',
-      userPoolClientSecret: '1afml2s71jf5amedvut1ru9vtvtedmeackug3i3j0h9coe0jmm66',
+      userPoolId: 'ap-southeast-2_K0JSeMqT3',
+      userPoolClientId: 'm9ekdqb4t0vjemkivjtapc0br',
       loginWith: {
         email: true,
-        username: true,
+        username: false,
         phone: false,
       },
     },
