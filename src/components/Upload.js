@@ -68,13 +68,30 @@ const Upload = () => {
     try {
       const session = await fetchAuthSession();
       const token = session.tokens?.idToken?.toString();
-      const response = await axios.post('http://<ec2-public-ip>:3000/upload', formData, {
+      const response = await axios.post('http://localhost:4000/upload', formData, {
         headers: { 
           'Content-Type': 'multipart/form-data',
           'Authorization': `Bearer ${token}`
         }
       });
-      setMessage('✅ ' + response.data);
+      const responseData = response.data;
+      let message = `✅ ${responseData.message}`;
+      
+      if (responseData.s3Location) {
+        message += `\n\n📁 S3 Location: ${responseData.s3Location}`;
+      }
+      
+      if (responseData.analysis) {
+        message += `\n\n🔍 Analysis Results:`;
+        if (responseData.analysis.labels && responseData.analysis.labels.length > 0) {
+          message += `\n📋 Detected Objects: ${responseData.analysis.labels.map(label => `${label.name} (${Math.round(label.confidence)}%)`).join(', ')}`;
+        }
+        if (responseData.analysis.detectedText && responseData.analysis.detectedText.length > 0) {
+          message += `\n📝 Detected Text: ${responseData.analysis.detectedText.map(text => text.text).join(', ')}`;
+        }
+      }
+      
+      setMessage(message);
     } catch (err) {
       setMessage('❌ Upload failed: ' + err.message);
     } finally {
@@ -201,7 +218,7 @@ const Upload = () => {
             ? 'status-success' 
             : 'status-error'
         }`}>
-          <p style={{ fontSize: '0.875rem' }}>{message}</p>
+          <div style={{ fontSize: '0.875rem', whiteSpace: 'pre-line' }}>{message}</div>
         </div>
       )}
 

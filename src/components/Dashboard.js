@@ -19,7 +19,7 @@ const Dashboard = () => {
         setIsLoading(true);
         const session = await fetchAuthSession();
         const token = session.tokens?.idToken?.toString();
-        const response = await axios.get('http://<ec2-public-ip>:3000/dashboard', {
+        const response = await axios.get('http://localhost:4000/dashboard', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
